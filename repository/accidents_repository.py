@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+
 from database.connect import accidents, chicago_car_accidents_db
 
 def get_total_accidents_by_region(region):
@@ -6,20 +6,32 @@ def get_total_accidents_by_region(region):
     return total_accidents
 
 
-# def parse_date(date_str: str):
-#     has_seconds = len(date_str.split(' ')) > 2
-#     date_format = '%m/%d/%Y %H:%M:%S %p' if has_seconds else '%m/%d/%Y %H:%M'
-#     return datetime.strptime(date_str, date_format)
-#
-# def get_total_accidents_by_period(start_date, period):
-#     pass
+def get_total_accidents_by_time_from_db(region, start_date1, end_date1):
+
+    total_accidents = chicago_car_accidents_db.accidents.count_documents({
+        "beat_of_occurrence": region,
+        "crash_date": {"$gte": start_date1, "$lt": end_date1}
+    })
+    return total_accidents
+
 
 def group_accidents_by_prim_cause(region):
     result = list(chicago_car_accidents_db.accidents.aggregate([
         { '$match': {'beat_of_occurrence': region}},
-        { '$group': {'_id': "$prim_contributory_cause",
+        { '$group': {'_id': "$injuries",
                      'total_accidents': { '$sum': 1 } } }
 
     ]))
     return result
 
+
+def injuries_stats_by_region(region):
+    result = list(chicago_car_accidents_db.accidents.aggregate([
+        {'$match': {'beat_of_occurrence': region}},
+        {'$group': {'_id': "$beat_of_occurrence",
+                    'total_injuries': {'$sum': '$injuries.injuries_total'},
+                    'total_injuries_fatal': {'$sum': '$injuries.injuries_fatal'},
+                    'total_injuries_non_fatal': {'$sum': '$injuries.injuries_non_fatal'}
+                    }}
+    ]))
+    return result
