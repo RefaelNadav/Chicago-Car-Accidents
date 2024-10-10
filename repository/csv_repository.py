@@ -1,7 +1,8 @@
 
 from database.connect import chicago_car_accidents_db, accidents
 import csv
-import os
+import datetime
+from datetime import datetime
 
 
 def read_csv(csv_path):
@@ -17,6 +18,12 @@ def validate_and_convert_int(value):
         return int(value)
     except (ValueError, TypeError):
         return None
+
+
+def parse_date(date_str: str):
+    has_seconds = len(date_str.split(' ')) > 2
+    date_format = '%m/%d/%Y %H:%M:%S %p' if has_seconds else '%m/%d/%Y %H:%M'
+    return datetime.strptime(date_str, date_format)
 
 
 def init_chicago_car_accidents():
@@ -35,7 +42,8 @@ def init_chicago_car_accidents():
 
        accident = {
            'beat_of_occurrence': row['BEAT_OF_OCCURRENCE'],
-           'crash_date': row['CRASH_DATE'].split(' ')[0],
+           # 'crash_date': row['CRASH_DATE'].split(' ')[0],
+           'crash_date': parse_date(row['CRASH_DATE']),
            'prim_contributory_cause': row['PRIM_CONTRIBUTORY_CAUSE'],
            'injuries': injuries
        }
